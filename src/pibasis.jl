@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------
 # ACE.jl and SHIPs.jl: Julia implementation of the Atomic Cluster Expansion
 # Copyright (c) 2019 Christoph Ortner <christophortner0@gmail.com>
-# All rights reserved.
+# Licensed under ASL - see ASL.md for terms and conditions.
 # --------------------------------------------------------------------------
 
 
@@ -114,6 +114,8 @@ end
 ==(B1::InnerPIBasis, B2::InnerPIBasis) = (
    (B1.b2iA == B2.b2iA) &&
    (B1.iAA2iA == B2.iAA2iA) )
+
+maxorder(basis::InnerPIBasis) = size(basis.iAA2iA, 2)
 
 Base.length(basis::InnerPIBasis) = length(basis.orders)
 
@@ -304,7 +306,7 @@ graphevaluator(basis::PIBasis) =
 standardevaluator(basis::PIBasis) =
    PIBasis(basis.basis1p, zlist(basis), basis.inner, StandardEvaluator())
 
-
+maxorder(basis::PIBasis) = maximum(maxorder.(basis.inner))
 
 # -------------------------------------------------
 # FIO codes

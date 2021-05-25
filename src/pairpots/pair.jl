@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------
 # ACE.jl and SHIPs.jl: Julia implementation of the Atomic Cluster Expansion
 # Copyright (c) 2019 Christoph Ortner <christophortner0@gmail.com>
-# All rights reserved.
+# Licensed under ASL - see ASL.md for terms and conditions.
 # --------------------------------------------------------------------------
 
 
@@ -27,6 +27,9 @@ import JuLIP: evaluate!, evaluate_d!, cutoff,
               z2i, i2z, numz,
               fltype, rfltype
 
+import JuLIP.Potentials: zlist               
+
+import ACE: scaling
 
 import JuLIP.MLIPs: alloc_B, alloc_dB
 

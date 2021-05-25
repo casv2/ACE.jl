@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------
 # ACE.jl and SHIPs.jl: Julia implementation of the Atomic Cluster Expansion
 # Copyright (c) 2019 Christoph Ortner <christophortner0@gmail.com>
-# All rights reserved.
+# Licensed under ASL - see ASL.md for terms and conditions.
 # --------------------------------------------------------------------------
 
 
@@ -73,3 +73,15 @@ specTi2_Al = specTi2[ [ all(b.z == zAl for b in B.oneps) for B in specTi2 ] ]
 println("The Ti-Ti interaction has more basis functions than Ti-Al interaction")
 @show length(specTi2_Ti)
 @show length(specTi2_Al)
+
+#---
+#
+# specAl = collect(keys(basis.pibasis.inner[iAl].b2iAA))
+# specTi = collect(keys(basis.pibasis.inner[iTi].b2iAA))
+# spec = [specAl; specTi]
+# I_ord2 = findall( order.(spec) .== 1 )
+#
+# ACE.degree.(Ref(Deg), spec[I_ord2])
+#
+# spec2 = spec[I_ord2]
+# ns_spec2 = [ b.oneps[1].n for b in spec2 ]

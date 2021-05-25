@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------
 # ACE.jl and SHIPs.jl: Julia implementation of the Atomic Cluster Expansion
 # Copyright (c) 2019 Christoph Ortner <christophortner0@gmail.com>
-# All rights reserved.
+# Licensed under ASL - see ASL.md for terms and conditions.
 # --------------------------------------------------------------------------
 
 
@@ -41,7 +41,7 @@ read_dict(::Val{:SHIPs_PSH1pBasisFcn}, D::Dict) =
 read_dict(::Val{:ACE_PSH1pBasisFcn}, D::Dict) =
    PSH1pBasisFcn(D["nlmz"]...)
 
-scaling(b::PSH1pBasisFcn, p) = b.n^p + b.l^p
+scaling(b::PSH1pBasisFcn, p) = b.n^p + b.l^p + abs(b.m)^p
 
 abstract type AbstractPSHDegree <: AbstractDegree end
 

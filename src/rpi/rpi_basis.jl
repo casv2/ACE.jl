@@ -2,10 +2,10 @@
 # --------------------------------------------------------------------------
 # ACE.jl and SHIPs.jl: Julia implementation of the Atomic Cluster Expansion
 # Copyright (c) 2019 Christoph Ortner <christophortner0@gmail.com>
-# All rights reserved.
+# Licensed under ASL - see ASL.md for terms and conditions.
 # --------------------------------------------------------------------------
 
-
+export get_orders, get_nl
 
 import ACE: standardevaluator, graphevaluator
 using SparseArrays: SparseMatrixCSC, sparse
@@ -38,6 +38,59 @@ standardevaluator(basis::RPIBasis) =
 graphevaluator(basis::RPIBasis) =
       RPIBasis( graphevaluator(basis.pibasis),
                 basis.A2Bmaps, basis.Bz0inds )
+
+_basisfcnidx(basis::RPIBasis, iz0::Integer, ib::Integer) = basis.Bz0inds[iz0][ib]
+
+# ------------------------------------------------------------------------
+#    Utilities / Basis analysis code
+# ------------------------------------------------------------------------
+
+function get_orders(basis::RPIBasis)
+   # get the correlation orders of the PIbasis ...
+   Ns_pi = zeros(Int, length(basis.pibasis))
+   for iz0 = 1:numz(basis)
+      inner = basis.pibasis.inner[iz0]
+      Ns_pi[inner.AAindices] .= inner.orders
+   end
+   # ... and use them to construct the correlation orders of the RPI basis
+   Ns = zeros(Int, length(basis))
+   for iz0 = 1:numz(basis)
+      # loop over basis functions belonging to centre-species iz0
+      for ib = 1:length(basis, iz0)
+         # find one of the indices of the PI basis that the current
+         # RPI basis function belongs to; they are all equivalent in
+         # terms of correlation-order, so only one of them matters.
+         iPI = findfirst(basis.A2Bmaps[iz0][ib,:] .!= 0)
+         Ns[_basisfcnidx(basis, iz0, ib)] = Ns_pi[iPI]
+      end
+   end
+   return Ns
+end
+
+function get_nl(basis::RPIBasis)
+   # get the correlation orders of the PIbasis ...
+   nnll_pi = Vector{Vector{Any}}(undef, length(basis.pibasis))
+   for iz0 = 1:numz(basis)
+      inner = basis.pibasis.inner[iz0]
+      for (key, val) in inner.b2iAA
+         b = [ (l = b.l, n = b.n) for b in key.oneps ]
+         nnll_pi[inner.AAindices[val]] = b
+      end
+   end
+   # ... and use them to construct the correlation orders of the RPI basis
+   nnll = Vector{Vector{Any}}(undef, length(basis))
+   for iz0 = 1:numz(basis)
+      # loop over basis functions belonging to centre-species iz0
+      for ib = 1:length(basis, iz0)
+         # find one of the indices of the PI basis that the current
+         # RPI basis function belongs to; they are all equivalent in
+         # terms of correlation-order, so only one of them matters.
+         iPI = findfirst(basis.A2Bmaps[iz0][ib,:] .!= 0)
+         nnll[_basisfcnidx(basis, iz0, ib)] = nnll_pi[iPI]
+      end
+   end
+   return nnll
+end
 
 # ------------------------------------------------------------------------
 #    FIO code
@@ -196,15 +249,26 @@ function combine(basis::RPIBasis, coeffs)
    return PIPotential(basis.pibasis, picoeffs)
 end
 
+"""
+`scaling(basis::RPIBasis, p[; a2b = abs2, fin = ...])` : same as usual but adds a keyword
+argument `use` :
+* `a2b = identity` : the old buggy scaling
+* `a2b = abs` : the bugfix which keeps the behaviour same/similar
+* `a2b = abs2` : a different kind of scaling which I believe is the right one
+but behaves a bit differently especially for high body-orders.
 
-function scaling(basis::RPIBasis, p)
+The `fin` keyword argument is the "finishing" map. E.g. if we take `a2b = abs2`,
+then we should apply a sqrt at the end. This is done automatically here.
+"""
+function scaling(basis::RPIBasis, p; a2b = abs2,
+                 fin = (a2b == abs2 ? sqrt : identity) )
    wwpi = scaling(basis.pibasis, p)
    wwrpi = zeros(Float64, length(basis))
    for iz0 = 1:numz(basis)
       wwpi_iz0 = wwpi[basis.pibasis.inner[iz0].AAindices]
-      wwrpi[basis.Bz0inds[iz0]] = basis.A2Bmaps[iz0] * wwpi_iz0
+      wwrpi[basis.Bz0inds[iz0]] = a2b.(basis.A2Bmaps[iz0]) * a2b.(wwpi_iz0)
    end
-   return wwrpi
+   return fin.(wwrpi)
 end
 
 
